@@ -1,0 +1,19 @@
+{
+  "recharge":[
+	{
+		"port":":15001",
+		"operatorid":"1",
+		"gmhost":"212.64.2.188:8082",
+		"rechargekey":"chm&tianmi&recharge&1122",
+		"clientkey":"chm&client&9527",
+		"mysql": {
+			"host": "127.0.0.1:3306",
+			"dbname": "client",
+			"user": "root",
+			"password": "123456",
+			"open":2000,
+			"idle":5
+		}
+	}
+  ]
+}
