@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/yhhaiua/log4go"
+	"github.com/yhhaiua/engine/log"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 )
+var gLog = log.GetLogger()
 
 func parseServer(playerId string) string  {
 	pid,_:= strconv.ParseInt(playerId, 10, 64)
@@ -48,9 +49,13 @@ func Sendgm(routers,orderId,money,goodsId,playerId,rechargekey,gmhost string) (i
 	buffer.WriteString(stime)
 	buffer.WriteString("&sign=")
 	buffer.WriteString(mysigon)
-	log4go.Info(buffer.String())
+	gLog.Info(buffer.String())
 
+	transport := http.Transport{
+		DisableKeepAlives: true,
+	}
 	client := &http.Client{
+		Transport:&transport,
 		Timeout: 5 * time.Second,
 	}
 	req, err := client.Get(buffer.String())
@@ -62,9 +67,9 @@ func Sendgm(routers,orderId,money,goodsId,playerId,rechargekey,gmhost string) (i
 			if valueRet == "ok"{
 				success = 0
 				errorStr = orderId+":ok"
-				log4go.Info(errorStr)
+				gLog.Info(errorStr)
 			}else{
-				log4go.Error("订单号:orderId:%s,充值错误返回:%s",orderId,valueRet)
+				gLog.Error("订单号:orderId:%s,充值错误返回:%s",orderId,valueRet)
 				errorStr = orderId+":"+valueRet
 				if valueRet == "-2"{
 					success = -1
@@ -73,12 +78,12 @@ func Sendgm(routers,orderId,money,goodsId,playerId,rechargekey,gmhost string) (i
 				}
 			}
 		}else{
-			log4go.Error("sendgm error2 订单号:orderId:%s,error:%s",orderId,err)
+			gLog.Error("sendgm error2 订单号:orderId:%s,error:%s",orderId,err)
 			success = 1
 			errorStr = orderId+":-10002"
 		}
 	}else{
-		log4go.Error("sendgm error1 订单号:orderId:%s,error:%s",orderId,err)
+		gLog.Error("sendgm error1 订单号:orderId:%s,error:%s",orderId,err)
 		success = -1
 		errorStr = orderId+":-10001"
 	}

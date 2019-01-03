@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/yhhaiua/engine/grouter"
-	"github.com/yhhaiua/log4go"
+	"github.com/yhhaiua/engine/log"
 	"github.com/yhhaiua/recharge/logic/config"
 	"github.com/yhhaiua/recharge/logic/control/wanba"
 	"github.com/yhhaiua/recharge/logic/model"
 	"net/http"
 )
+var gLog = log.GetLogger()
 
 type ChargeControl struct {
 	wanba wanba.WanBa
@@ -43,7 +44,7 @@ func (contol *ChargeControl) RechargeDeal(w http.ResponseWriter, r *http.Request
 		ret,value := contol.wanba.RechargeDeal(w,r)
 		contol.send(w,ret,value)
 	default:
-		log4go.Error("错误渠道请求:%s",operatorid)
+		gLog.Error("错误渠道请求:%s",operatorid)
 		contol.send(w,-100," operatorid no have error")
 	}
 }

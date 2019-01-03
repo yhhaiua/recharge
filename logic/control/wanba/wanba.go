@@ -9,7 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/yhhaiua/engine/gjson"
-	"github.com/yhhaiua/log4go"
+	"github.com/yhhaiua/engine/log"
 	"github.com/yhhaiua/recharge/logic/config"
 	"github.com/yhhaiua/recharge/logic/control/backstage"
 	"github.com/yhhaiua/recharge/logic/model"
@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"time"
 )
-
+var gLog = log.GetLogger()
 type WanBa struct {
 	config *config.Config
 }
@@ -81,13 +81,13 @@ func (wanba *WanBa) inquiryRet(w http.ResponseWriter,r *http.Request) (int,strin
 	cipherStr := md5Ctx.Sum(nil)
 	mysigon := hex.EncodeToString(cipherStr)
 	if(mysigon != sign){
-		log4go.Error("md5 error : me:%s,client:%s",mysigon,sign)
+		gLog.Error("md5 error : me:%s,client:%s",mysigon,sign)
 		return -100,"md5 error"
 	}
 	id,_:= strconv.Atoi(itemid)
 	value,ok := wanba.config.GetMoney(id)
 	if !ok{
-		log4go.Error("没有对应的商品:%s",itemid)
+		gLog.Error("没有对应的商品:%s",itemid)
 		return -100,"no item"
 	}
 	return 0,strconv.Itoa(value)
@@ -101,7 +101,7 @@ func (wanba *WanBa)runSendGm(billno,money,itemid,playerid string)  {
 			chargelog:= new(model.RechargeLog)
 			err := chargelog.Update(billno,money,itemid,playerid,errStr,wanba.config.Operatorid)
 			if(err != nil){
-				log4go.Error("chargelog.Insert: %s",err)
+				gLog.Error("chargelog.Insert: %s",err)
 			}
 			model.DelMap(playerid)
 			go backstage.Testsend("订单补发:"+errStr)
@@ -120,7 +120,7 @@ func (wanba *WanBa) sendGm(w http.ResponseWriter,r *http.Request,money,billno st
 		chargelog:= new(model.RechargeLog)
 		err:=chargelog.Insert(billno,money,itemid,playerid,errStr,wanba.config.Operatorid)
 		if(err != nil){
-			log4go.Error("chargelog.Insert: %s",err)
+			gLog.Error("chargelog.Insert: %s",err)
 		}
 		if ret == -1{
 			go wanba.runSendGm(billno,money,itemid,playerid)
@@ -149,7 +149,7 @@ func (wanba *WanBa)deductionRet(w http.ResponseWriter, r *http.Request,money,bil
 	if(info != nil){
 		jsondata, err := gjson.NewJSONByte(info)
 		if err != nil {
-			log4go.Error("deductionRet NewJsonByte: %s",err)
+			gLog.Error("deductionRet NewJsonByte: %s",err)
 			return -100,"deductionRet json error"
 		}
 		code := jsondata.Getint("code")
@@ -222,9 +222,13 @@ func (wanba *WanBa)deduction(openid,openkey,appid,userip,zoneid,money,billno,pf 
 	buffer.WriteString(sig)
 
 	sendStr := "https://api.urlshare.cn/v3/user/buy_playzone_item?" + buffer.String()
-	log4go.Info(sendStr)
+	gLog.Info(sendStr)
 
+	transport := http.Transport{
+		DisableKeepAlives: true,
+	}
 	client := &http.Client{
+		Transport:&transport,
 		Timeout: 10 * time.Second,
 	}
 	//req, err := client.Get(sendStr)
@@ -233,13 +237,13 @@ func (wanba *WanBa)deduction(openid,openkey,appid,userip,zoneid,money,billno,pf 
 		defer req.Body.Close()
 		body, err := ioutil.ReadAll(req.Body)
 		if err == nil {
-			log4go.Info(string(body))
+			gLog.Info(string(body))
 			return body
 		}else{
-			log4go.Error("deduction error2:%s",err)
+			gLog.Error("deduction error2:%s",err)
 		}
 	}else{
-		log4go.Error("deduction error1:%s",err)
+		gLog.Error("deduction error1:%s",err)
 	}
 	return nil
 }
@@ -251,7 +255,7 @@ func (wanba *WanBa)MakeUpOrder(w http.ResponseWriter, r *http.Request)(int,strin
 	id,_:= strconv.Atoi(itemid)
 	value,ok := wanba.config.GetMoney(id)
 	if !ok{
-		log4go.Error("没有对应的商品:%s",itemid)
+		gLog.Error("没有对应的商品:%s",itemid)
 		return -100,"no item"
 	}
 	if(model.CheckMap(playerid)){

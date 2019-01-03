@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/yhhaiua/engine/grouter"
-	"github.com/yhhaiua/log4go"
 	"github.com/yhhaiua/recharge/logic/model"
 	"net/http"
 )
@@ -18,7 +17,7 @@ func (contol *ChargeControl) StopCharge(w http.ResponseWriter, r *http.Request, 
 	stype := r.FormValue("type")
 
 	if operatorid != contol.config.Operatorid{
-		log4go.Error("stopCharge operatorid error : me:%s,client:%s,操作人:%s",contol.config.Operatorid,operatorid,model.GetUserIp(r))
+		gLog.Error("stopCharge operatorid error : me:%s,client:%s,操作人:%s",contol.config.Operatorid,operatorid,model.GetUserIp(r))
 		contol.send(w,-100,"operatorid error")
 		return
 	}
@@ -29,20 +28,20 @@ func (contol *ChargeControl) StopCharge(w http.ResponseWriter, r *http.Request, 
 	cipherStr := md5Ctx.Sum(nil)
 	mysigon := hex.EncodeToString(cipherStr)
 	if(mysigon != sign){
-		log4go.Error("stopCharge md5 error : me:%s,client:%s,操作人:%s",mysigon,sign,model.GetUserIp(r))
+		gLog.Error("stopCharge md5 error : me:%s,client:%s,操作人:%s",mysigon,sign,model.GetUserIp(r))
 		contol.send(w,-100,"md5 error")
 		return
 	}
 	if stype == "1"{
 		model.StopRecharge = true
-		log4go.Info("stopCharge stop success : 操作人:%s",model.GetUserIp(r))
+		gLog.Info("stopCharge stop success : 操作人:%s",model.GetUserIp(r))
 		contol.send(w,0,"stop success")
 	}else if stype == "0"{
 		model.StopRecharge = false
-		log4go.Info("stopCharge open success : 操作人:%s",model.GetUserIp(r))
+		gLog.Info("stopCharge open success : 操作人:%s",model.GetUserIp(r))
 		contol.send(w,0,"open success")
 	}else{
-		log4go.Error("stopCharge stype error :client:%s,操作人:%s",stype,model.GetUserIp(r))
+		gLog.Error("stopCharge stype error :client:%s,操作人:%s",stype,model.GetUserIp(r))
 		contol.send(w,-100,"stype error")
 	}
 }
